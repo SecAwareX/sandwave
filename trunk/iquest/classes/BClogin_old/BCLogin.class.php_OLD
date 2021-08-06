@@ -1,0 +1,309 @@
+<?php
+/**
+ * @class login : login , login/logtout. set de benodige sessions is niet module specifiek. het gedeelte wat wel module speciefiek is komt in de module login
+ * deze verschilt per project
+ * @author : Kurt v. Nieuwenhuyze
+ * @date : 2010/01/02
+ * @todo: setters maken, en alles hierlangs laten verlopen zodat we in de toekomst ook geen set fouten kunnen maken
+ * @todo : newpassword methode implementeren, zodat er ook een nieuw wachtwoord aangevraagd kan worden
+ * @todo regexpressions in checklibaryLogin.
+ * @todo : indeling nog is goed bekijken, nu is er overlap met de controlerclass, misschien sommige zaken in controler oplossen 
+ * @revision - 2010/11/13 : function generateNewPassword toegevoegd
+ * @todo refactoring
+ */
+
+
+ class BClibarys_BClogin_BCLogin 
+{
+	const ERROR= 100;
+	const INIT = 101;
+	const READY = 102;
+	
+	//username types, zo kan er een emailadres of een gewoone username gebruikt worden
+	const USERNAMETYPE_EMAIL = 0;
+	const USERNAMETYPE_NAME = 1;
+	
+	//maximaal aantal foutieve login pogingen
+	const MAX_FAILEDATTEMPTS= 100;
+	
+	/**
+	 * @access protected
+	 * @var object : het loginformulier
+	 */
+	protected $m_oLoginForm;
+	
+	/**
+	 * @access protected 
+	 * @var string : de ingevoerde username , wordt ook gebruikt om de userdata uit de db te halen, als er geen resultaat is dan is de login zo en zo mislukt
+	 */
+	protected $m_sUserNameInput;
+	
+	/**
+	 * @access protected
+	 * @var string :het ingevoerde wachtwoord, wordt vergleken met het wachtwoord opgehaald uit de db
+	 */
+	protected $m_sPasswordInput;
+	
+	/**
+	 * @access protected
+	 * @var string : de definitiefe username wordt geset in de childclass, alleen met een geldige resulttaat uit db
+	 */
+	protected $m_sUserName;
+	
+	/**
+	 * @access protected
+	 * @var integer  : de unieke gebruikers id meestal is dit ook de unieke id waarononder bv een persoon, gebruiker, bedrijf etc in de db is opgeslagen
+	 */
+	protected $m_iUserID;
+	
+	/**
+	 * @protected 
+	 * @var string : het wachtwoord opgehaald uit db
+	 */
+	protected $m_sPassword;
+	
+	/**
+	 * @access private
+	 * @var integer
+	 */
+	private $m_iStatus;
+	
+	/**
+	 * @access private
+	 * @var string met eventuele errormessage
+	 */
+	private $m_sErrorMessage;
+	
+	/**
+	 * @access private
+	 * @var array met rechten
+	 */
+	protected $m_aRights;
+	
+	/**
+	 * @access public 
+	 * @return void
+	 */
+	public function __construct()
+	{
+		$this->m_oLoginForm= new BClibarys_BClogin_BCLoginForm();
+		$this->m_oLoginForm->buildForm();
+		
+		$this->m_aRights=array();
+		$this->m_sUserNameInput="";
+		$this->m_sPassWordInput="";
+		$this->m_sUserName="";
+		$this->m_sPassWord="";
+		$this->m_iUserID=-1;
+		$this->m_sErrorMessage="inloggen mislukt,controleer username en wachtwoord";
+		$this->m_iStatus=self::INIT;
+		(!isset($_SESSION["ATTEMPTS"])?$_SESSION["ATTEMPTS"]=0:"");
+	}
+	
+	/**
+	 * @access puplic 
+	 * @return array met loginformulier en eventuele form fouten
+	 */
+	public function getLoginForm()
+	{
+		
+		$aLoginForm=array("aLoginForm"=>$this->m_oLoginForm->getForm(),"aLoginFormErrors"=>$this->m_oLoginForm->getFormErrors());
+		
+		return $aLoginForm;
+	}
+	
+	/**
+	 * handleLogin(): handelt daadweerkelijk de loginprocedure af, als er meer dan de waarde van max_FAILEDATTEPTS een foutieve combinatie wordt opgegevne dan altijd false
+	 * inloggen is dan pas weer mogelijk met nieuwe sessie
+	 * @access public 
+	 * @return boolean 
+	 * @todo : uitzoeken of beveiliging afdoende is tegen bruteforce etc
+	 */
+	public function handleLogin()
+	{
+		$bLogin=FALSE;
+		if($_SESSION["ATTEMPTS"] > self::MAX_FAILEDATTEMPTS)
+		{
+			$this->m_iStatus=self::ERROR;
+			$this->m_sErrorMessage="inloggen mislukt,controleer username en wachtwoord";
+			$bLogin=FALSE;
+		}elseif($this->m_oLoginForm->handleForm())
+			{
+				//als het formulier correct is ingevuld
+				//input vars setten
+				$this->setFormInput();
+				try
+					{
+					//de userdata uit de db halen, zodat data vergeleken kan worden, gebeurt in de childclass
+					//exception opvangen als deze van het type EMPTYRESULT is dan afhandelen, anders doorgooien
+					$this->getUserData();
+					}catch(CustomPDOException $e)
+						{
+							if($e->getErrorType() == CustomPDOException::EMPTYRESULT)
+							{
+								$e->log("Login.txt");
+								$bLogin=FALSE;
+							}else
+								{
+									throw $e;
+								}
+						}
+			
+				//ingevulde vars vergelijken met de vars uit de db
+				if($this->compare())
+				{
+					$_SESSION["LogedIn"]=TRUE;
+					$_SESSION["UserID"]=$this->m_iUserID;
+					$_SESSION["Rights"]=$this->m_aRights;
+					$_SESSION["IP"]=$_SERVER["REMOTE_ADDR"];
+					$_SESSION["User_Agent"]=$_SERVER["HTTP_USER_AGENT"];
+					$bLogin=TRUE;
+				}else
+					{
+						//vergelijk mislukt,login mislukt 
+						$_SESSION["ATTEMPTS"]++;
+						$this->m_iStatus=self::ERROR;
+						$this->m_sErrorMessage="inloggen mislukt,controleer username en wachtwoord";
+						$bLogin=FALSE;
+					}
+			}else
+				{
+					
+					//$this->m_iStatus=self::ERROR;
+					$bLogin=FALSE;
+				}
+				
+		return $bLogin;
+	}
+	
+	/**
+	 * setFormInput():set de vars om te vergelijken met de opgehaalde vars uit de db,string controle is reeds gebeurt in de form 
+	 * @access private
+	 * @return void
+	 */
+	private function setFormInput()
+	{
+		
+		$aInput=$this->m_oLoginForm->getFormValues();
+		
+		$this->m_sUserNameInput=trim($aInput["username"]);
+		$this->m_sPassWordInput=trim($aInput["password"]);
+	}
+	
+	/**
+	 * vergelijkt de uit de db opgehaalde username & password met de ingevoerde Username en password
+	 * @access private
+	 * @return boolean vergelijking geslaag TRUE andersFALSE
+	 */
+	private function compare()
+	{ 
+		$bCompare=FALSE;
+		
+		if (($this->m_sUserNameInput == $this->m_sUserName) && (md5($this->m_sPassWordInput) == $this->m_sPassWord))
+		{
+			$bCompare=TRUE;
+		}else
+			{
+				$bCompare=FALSE;
+				
+			}
+			
+		return $bCompare;
+	}
+	
+	/**
+	 * isLoggedIn(): kijkt of de session vars bestaan en of de waarden overeenkomen
+	 * @access public 
+	 * @return boolean True als de vergelijking waar is , andrs FALSE.
+	 */
+	public static function isLoggedIn()
+	{
+		$bLoggedIn=FALSE;
+		if( (isset($_SESSION["LogedIn"])&& $_SESSION["LogedIn"]==TRUE) && (isset($_SESSION["UserID"])) && 
+			(isset($_SESSION["IP"])&& $_SESSION["IP"]== $_SERVER["REMOTE_ADDR"]) && 
+			(isset($_SESSION["User_Agent"])&& $_SESSION["User_Agent"] == $_SERVER["HTTP_USER_AGENT"]) )
+		{
+			$bLoggedIn=TRUE;
+			
+		}else
+			{
+				$bLoggedIn=FALSE;
+			}
+			
+		return $bLoggedIn;
+	}
+	
+	/**
+	 * logOut() : unset alle session vars, hierdoor zijn we weer uitgelogd
+	 * @access public 
+	 * @return void
+	 */
+	public static function logOut()
+	{
+		unset($_SESSION["LogedIn"]);
+		unset($_SESSION["UserID"]);
+		unset($_SESSION["Rights"]);
+		unset($_SESSION["IP"]);
+		unset($_SESSION["User_Agent"]);
+		unset($_SESSION["ATTEMPTS"]);
+	}
+	
+	/**
+	 * @access public
+	 * @return integer
+	 */
+	public function getStatus()
+	{
+		return $this->m_iStatus;
+	}
+	
+	/**
+	 * @access public
+	 * @return string
+	 */
+	public function getError()
+	{
+		return $this->m_sErrorMessage;
+	}
+	
+	public static function hasRights($p_iRights)
+	{
+		$bCheck=FALSE;
+		if(isset($_SESSION["Rights"]))
+		{
+			if(in_array($p_iRights,$_SESSION["Rights"]))
+			{
+				$bCheck=TRUE;
+			}
+		}
+		
+		return $bCheck;
+	}
+	
+	/**
+	 * @access static public 
+	 * @return string
+	 */
+	public static function generateNewPassWord()
+	{
+		$sPassWord = "";
+		$sPassWord.= substr("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",mt_rand(0,52),1);
+		$sPassWord.= substr("0123456789",mt_rand(0,10),1);;
+		$sPassWord.= substr("ABCDEFGHIJKLMNOPQRSTUVWXYZ",mt_rand(0,26),1);;
+		$sPassWord.= substr("!@#&*",mt_rand(0,5),1);;
+		$sPassWord.= substr("abcdefghijklmnopqrstuvwxyz",mt_rand(0,52),1);;
+		$sPassWord.= substr("!@#&*",mt_rand(0,5),1);;
+		$sPassWord.= substr("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",mt_rand(0,62),1);
+		$sPassWord.= substr("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",mt_rand(0,52),1);
+		
+		
+		return $sPassWord;
+	}
+	
+	//zorgen dat de childclasses zeker deze methode implementeren
+	abstract protected function getUserData();
+	
+	
+	
+}
+?>

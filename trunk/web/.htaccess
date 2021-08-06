@@ -1,0 +1,39 @@
+Options +FollowSymLinks +ExecCGI
+
+<Files ~ "\.inc.php$">
+Order allow,deny
+Deny from all
+</Files>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+# Bestaande bestanden of mappen uitsluiten 
+#RewriteCond %{REQUEST_FILENAME} -f [NC,OR] 
+#RewriteCond %{REQUEST_FILENAME} -d [NC] 
+
+#RewriteRule ^(.*?)$ $1 [L] 
+
+#zorgt ervoor dat we de extentie html kunnen gebruiken zonder dat pagina.html fysiek aanwezig is
+ # we skip all files with .something
+  RewriteCond %{REQUEST_URI} \..+$
+  RewriteCond %{REQUEST_URI} !\.html$
+ 
+RewriteRule .* - [L]
+
+  # we check if the .html version is here (caching)
+  RewriteRule ^$ index.html [QSA]
+  RewriteRule ^([^.]+)$ $1.html [QSA]
+  RewriteCond %{REQUEST_FILENAME} !-f
+
+  # no, so we redirect to our front web controller
+  RewriteRule ^(.*)$ index.php [QSA,L]
+
+
+</IfModule>
+
+# big crash from our front web controller
+ErrorDocument 500 "<h2>Application error</h2>Application failed to start properly"
+
+#php_flag magic_quotes_gpc off
+
+

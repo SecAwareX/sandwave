@@ -1,0 +1,323 @@
+
+.buttonContainer
+{
+	display:inline-block;
+}
+
+.loginBTN
+{
+	margin-left:-200px;
+}
+
+button.close
+{
+	color:white;
+	border:1px solid white;
+	font-size:2em;
+	margin-top:-35px;
+	margin-right:-12px;
+	width:40px;
+}
+
+.alert.alert-danger p
+{
+	width:90%;
+}
+
+.alert.alert-warning
+{
+	width:80%;
+	margin:auto;
+	margin-top:10%;
+	background-color:#f8d7da;
+	border:1px solid #f5c6cb;
+	color:#721c24;
+}
+
+.alert.alert-succes
+{
+	width:80%;
+	margin:auto;
+	margin-top:10%;
+	background-color:#d4edda;
+	border:1px solid #c3e6cb;
+	color:#155724;
+}
+
+.alert.alert-succes.normal
+{
+	width:100%;
+	margin:auto;
+	background-color:#d4edda;
+	border:1px solid #c3e6cb;
+	color:#155724;
+	margin-top:0px;
+}
+
+.alert.alert-warning.normal
+{
+	width:100%;
+	margin:auto;
+	margin-top:10%;
+	background-color:#f8d7da;
+	border:1px solid #f5c6cb;
+	color:#721c24;
+	margin-top:0px;
+}
+
+.table.table-striped tr.errorrow
+{
+	background-color:white;
+	
+}
+.errorrow td
+{
+	color:red;
+	font-weight:bold;
+	height:50px;
+}
+
+a.editLink
+{
+	font-weight:bold;
+}
+
+a.editLink:hover
+{
+	text-decoration:underline;
+}
+
+a.editLink.change
+{
+	color:green;
+}
+
+a.editLink.delete
+{
+	color:red;
+}
+
+a.editLink.blockt
+{
+	color:#dddddd;
+	pointer-events: none;
+    cursor: default;
+}
+
+a.btn.btn-primary.disabled
+{
+	color:red;
+	pointer-events: none;
+    cursor:none;
+}
+
+hr.spacer
+{
+	  border-color:#000 -moz-use-text-color #000;
+}
+
+
+.companyQuestions
+{
+	
+	display:none;
+	margin-top:10px;
+}
+
+#dashboard
+{
+	
+	background-color:white;
+	margin-top:50px;
+}
+
+
+.nav-tab-holder {
+  padding: 0 0 0 30px;
+  float: right;
+}
+
+.nav-tab-holder .nav-tabs {
+  border: 0;
+  float: none;
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.nav-tab-holder .nav-tabs > li {
+  margin-bottom: -3px;
+  text-align: center;
+  padding: 0;
+  display: table-cell;
+  float: none;
+  padding: 0;
+}
+
+.nav-tab-holder .nav-tabs > li > a {
+  background: #d9d9d9;
+  color: #6c6c6c;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 300;
+}
+
+.nav-tab-holder .nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {
+  color: #FFF;
+  background-color: #23bab5;
+  border: 0;
+  border-radius: 0;
+}
+
+.overdue
+{
+	color:red;	
+}
+
+.buttonGroup
+{
+	margin-top:27px;
+}
+
+form#clientForm {
+	
+	padding-top:50px;
+	width:90%;
+	margin:auto;
+}
+
+form#clientForm h1 {
+	border-top:1px dotted #23bab5;
+	padding-top:50px;
+}
+
+form#clientForm label {
+	font-size:15px;
+}
+
+form#clientForm label span.number {
+	font-size:20px;
+}
+
+form#clientForm [type="text"] {
+	
+	width:50%;
+}
+
+form#clientForm textarea {
+	width:60%;
+}
+
+form#clientForm select.form-control {
+	width:60%;
+}
+
+#scoreContainer {
+	
+	border:1px solid #ffeeba;
+	color:#856404;
+	background-color:#fff3cd;
+	
+	padding:20px;
+}
+
+#questionsFilled {
+	
+	color:#155724;
+	font-size:20px;
+	font-weight:bold;
+}
+
+#filled {
+	
+	color:red;
+}
+
+h2.questionGroupName {
+	padding-top:20px;
+	margin-top:10px;
+	padding-bottom:10px;
+	font-size:2em;
+	color:#155724;
+	border-top:1px solid grey;
+	
+}
+
+h2.questionGroupName:nth-of-type(1){
+	border-top:none;
+	margin-top:10px;
+	
+}
+
+table.score
+{
+	color:#000;
+	font-weight:bold;
+	border-collapse: collapse; 	
+}
+
+table.score th {
+	color:#856404;
+	min-width:100px;
+	border-right:1px solid #856404;
+	text-align:center;
+}
+
+table.score td {
+	padding-top:5px;
+	padding-bottom:5px;
+	border-right:1px solid #856404;
+}
+
+table.score td.Scorelabel {
+	min-width:250px;
+}
+
+table.score td.center{
+	text-align:center;
+}
+
+table.score td.scoreGroup{
+	vertical-align: top;
+	border-right:0px;
+}
+
+table.score tr {
+	
+	border-bottom:1px solid #856404;
+}
+
+table.questionScore
+{
+	color:#000;
+	font-weight:bold;
+	border-collapse: collapse; 
+	width:100%;
+	vertical-align: bottom;
+	
+}
+
+table.questionScore td.questionNumber {
+	text-align:center;
+	border:0px;
+	color:grey;
+	
+}
+
+table.questionScore td.noflag, table.questionScore td.flag {
+	border-left:1px solid #856404;
+	text-align:center;
+	
+}
+
+table.questionScore td.flag {
+	background-color:red;
+	color:white;
+}
+
+
+
+
+
+
+
